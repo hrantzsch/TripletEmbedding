@@ -4,7 +4,7 @@ with open('tripletembedding/requirements.txt') as f:
     install_requires = f.read().splitlines()
 
 setup(name='tripletembedding',
-      version='0.1',
+      version='1.0',
       description='',
       url='https://github.com/hrantzsch/TripletEmbedding',
       author='Hannes Rantzsch',
