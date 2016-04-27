@@ -1,0 +1,1 @@
+from tripletembedding.predictors.tripletnet import TripletNet
