@@ -18,35 +18,26 @@ class SmallDnn(chainer.Chain):
             conv4=L.Convolution2D(64, 32, 3, stride=2, pad=1),
             bn4=L.BatchNormalization(32),
             fc1=L.Linear(128, 128),
-            fc2=L.Linear(128, 32)
+            fc2=L.Linear(128, 3)
         )
         self.train = True
-        self.relu = False
 
     def clear(self):
         self.loss = None
         self.accuracy = None
 
-    def maybe_relu(self, x):
-        if self.relu:
-            return F.relu(x)
-        else:
-            return x
-
     def __call__(self, x):
         self.clear()
 
-        h = self.bn1(self.conv1(x), test=not self.train)
-        h = F.max_pooling_2d(self.maybe_relu(h), (3, 5), stride=2)
+        h = self.conv1(x)
+        h = F.max_pooling_2d(h, (3, 5), stride=2)
 
-        h = self.bn2(self.conv2(h), test=not self.train)
-        h = self.maybe_relu(h)
+        h = self.conv2(h)
 
-        h = self.bn3(self.conv3(h), test=not self.train)
-        h = F.max_pooling_2d(self.maybe_relu(h), 3, stride=2, pad=1)
+        h = self.conv3(h)
+        h = F.max_pooling_2d(h, 3, stride=2, pad=1)
 
-        h = self.bn4(self.conv4(h), test=not self.train)
-        h = self.maybe_relu(h)
+        h = self.conv4(h)
 
         h = self.fc1(h)
         h = self.fc2(h)
