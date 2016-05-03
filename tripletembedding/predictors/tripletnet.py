@@ -6,7 +6,6 @@ from tripletembedding.functions import sqrt
 
 from chainer import cuda
 
-
 class TripletNet(chainer.Chain):
     """
     A triplet network remodelling the network proposed in
@@ -25,7 +24,7 @@ class TripletNet(chainer.Chain):
         Calculate share of samples where anc-pos distance is smaller than
         anc-neg distance.
         """
-        return (dist_pos.data < dist_neg.data).sum() / len(dist_pos.data)
+        return (dist_pos.data < dist_neg.data).sum() / dist_pos.data.size
 
     def _max_distance(self, dist_pos, dist_neg):
         """
@@ -41,42 +40,41 @@ class TripletNet(chainer.Chain):
         h = F.reshape(h, (h.data.shape[0], h.data.shape[1]))
         return h
 
-    def l2norm(self, x):
-        """
-        Force embeddings onto a hypershere.
-        This has been done in
-        Schroff et al. “FaceNet: A Unified Embedding for Face Recognition and
-        Clustering.” arXiv:1503.03832 [cs], March 12, 2015.
-        http://arxiv.org/abs/1503.03832.
-        However it did not work out for me very well, so this function is
-        currently not used.
-        """
-        return F.local_response_normalization(x, n=x.data.shape[1]*2,
-                                              k=0, alpha=1, beta=0.5)
-
     def squared_distance(self, anc, pos, neg):
         """
         Compute anchor-positive distance and anchor-negative distance on
         batches of anchors, positive, and negative samples.
         """
-        dist_pos = F.expand_dims(F.batch_l2_norm_squared(anc - pos), 1)
-        dist_neg = F.expand_dims(F.batch_l2_norm_squared(anc - neg), 1)
+        dist_pos = abs(anc - pos)  # TODO betrag!
+        dist_neg = abs(anc - neg)
 
         return dist_pos, dist_neg
 
-    def compute_loss(self, dist_pos, dist_neg, margin_factor=1.0):
+    def compute_loss(self, dist_pos, dist_neg, margin_factor=1.0, dims=3):
         """
         Use Softmax on the distances as a ratio measure and compare it to a
         vector of [[0, 0, ...] [1, 1, ...]] (Mean Squared Error).
         This function also computes the accuracy and the 'max_distance'.
         """
         # apply margin factor and take square root
-        dist = sqrt(F.concat((dist_pos * margin_factor, dist_neg)))
+        # dist = sqrt(F.concat((dist_pos * margin_factor, dist_neg)))
 
-        sm = F.softmax(dist)
-        self.loss = mse_zero_one(sm)
+        dist_pos_split = F.split_axis(dist_pos, dist_pos.data.shape[1], 1)
+        dist_neg_split = F.split_axis(dist_neg, dist_neg.data.shape[1], 1)
+
+        splices = (F.concat((dist_pos_split[i], dist_neg_split[i])) for i in range(len(dist_pos_split)))
+
+        softmaxes = F.concat(F.softmax(s) for s in splices)
+
+        n = len(dist_pos.data)
+        zero_one = cuda.cupy.array([0, 1] * dims, dtype=cuda.cupy.float32)
+        zero_one = chainer.Variable(cuda.cupy.vstack([zero_one] * n))
+        zero_one.unchain_backward()
+
+        self.loss = F.mean_squared_error(softmaxes, zero_one)
         self.accuracy = self._accuracy(dist_pos, dist_neg)
-        self.dist = self._max_distance(dist_pos, dist_neg)
+        # self.dist = self._max_distance(dist_pos, dist_neg)
+        self.dist = 0
 
         return self.loss
 
