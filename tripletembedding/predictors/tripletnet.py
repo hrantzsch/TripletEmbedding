@@ -4,8 +4,6 @@ from chainer import functions as F
 from tripletembedding.functions import mse_zero_one
 from tripletembedding.functions import sqrt
 
-from chainer import cuda
-
 
 class TripletNet(chainer.Chain):
     """

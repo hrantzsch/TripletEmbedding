@@ -1,7 +1,6 @@
 import sys
 from datetime import date, datetime
 
-import chainer
 from chainer import serializers
 
 
@@ -37,11 +36,12 @@ class Logger:
         serializers.save_hdf5(prefix + ".state", self.optimizer)
         print("Snapshot created")
 
-    def log_iteration(self, label, loss, acc=None, mean_diff=None, max_diff=None):
+    def log_iteration(self, label, loss, acc=None, mean_diff=None,
+                      max_diff=None):
         self.iteration += 1
 
-        print("{} {:04d}:\tloss={:.4f}".format(label, self.iteration, loss),
-              end='')
+        print("{} {:04d}:\tloss={:.4f}"
+              .format(label, self.iteration, loss), end='')
         self.sum_loss += loss
         if acc is not None:
             print(", acc={:.3%}".format(acc), end='')
@@ -60,14 +60,17 @@ class Logger:
 
     def log_mean(self, label):
 
-        print("{} mean\tloss={:.4f}".format(label, self.sum_loss / self.iteration),
-              end='')
+        print("{} mean\tloss={:.4f}"
+              .format(label, self.sum_loss / self.iteration), end='')
         if self.sum_acc > 0:
-            print(", acc={:.3%}".format(self.sum_acc / self.iteration), end='')
+            print(", acc={:.3%}"
+                  .format(self.sum_acc / self.iteration), end='')
         if self.sum_mean_diff != 0:
-            print(", mean_diff={:.3}".format(self.sum_mean_diff / self.iteration), end='')
+            print(", mean_diff={:.3}"
+                  .format(self.sum_mean_diff / self.iteration), end='')
         if self.sum_max_diff > 0:
-            print(", max_diff={:.3}".format(self.sum_max_diff / self.iteration), end='')
+            print(", max_diff={:.3}"
+                  .format(self.sum_max_diff / self.iteration), end='')
         print()
 
         self.iteration = 0
@@ -82,7 +85,8 @@ class Logger:
                 f.write("{} [{}]".format(label, self.optimizer.epoch))
                 f.write('\n')
                 self.current_section = label
-            f.write("{},{},{},{}\n".format(self.iteration, loss, acc, mean_diff, max_diff))
+            f.write("{},{},{},{}\n"
+                    .format(self.iteration, loss, acc, mean_diff, max_diff))
 
     def mark_lr(self):
         with open(self.log_file, 'a+') as f:
