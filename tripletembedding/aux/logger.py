@@ -18,8 +18,8 @@ class Logger:
         self.iteration = 0
         self.sum_loss = 0
         self.sum_acc = 0
-        self.sum_mean_dist = 0
-        self.sum_nonzero = 0
+        self.sum_mean_diff = 0
+        self.sum_max_diff = 0
         self.current_section = ''
         self.optimizer = optimizer
 
@@ -37,7 +37,7 @@ class Logger:
         serializers.save_hdf5(prefix + ".state", self.optimizer)
         print("Snapshot created")
 
-    def log_iteration(self, label, loss, acc=None, mean_dist=None, nonzero=None):
+    def log_iteration(self, label, loss, acc=None, mean_diff=None, max_diff=None):
         self.iteration += 1
 
         print("{} {:04d}:\tloss={:.4f}".format(label, self.iteration, loss),
@@ -46,17 +46,17 @@ class Logger:
         if acc is not None:
             print(", acc={:.3%}".format(acc), end='')
             self.sum_acc += acc
-        if mean_dist is not None:
-            print(", dist={:.3}".format(mean_dist), end='')
-            self.sum_mean_dist += mean_dist
-        if nonzero is not None:
-            print(", nonzero={:.3%}".format(nonzero), end='')
-            self.sum_nonzero += nonzero
+        if mean_diff is not None:
+            print(", mean_diff={:.3}".format(mean_diff), end='')
+            self.sum_mean_diff += mean_diff
+        if max_diff is not None:
+            print(", max_diff={:.3}".format(max_diff), end='')
+            self.sum_max_diff += max_diff
 
         print("      ", end='\r')  # I wonder if there's a better way to pad
 
         if self.log_file is not None:
-            self.write_iteration(label, loss, acc, mean_dist, nonzero)
+            self.write_iteration(label, loss, acc, mean_diff, max_diff)
 
     def log_mean(self, label):
 
@@ -64,25 +64,25 @@ class Logger:
               end='')
         if self.sum_acc > 0:
             print(", acc={:.3%}".format(self.sum_acc / self.iteration), end='')
-        if self.sum_mean_dist != 0:
-            print(", dist={:.3}".format(self.sum_mean_dist / self.iteration), end='')
-        if self.sum_nonzero > 0:
-            print(", nonzero={:.3%}".format(self.sum_nonzero / self.iteration), end='')
+        if self.sum_mean_diff != 0:
+            print(", mean_diff={:.3}".format(self.sum_mean_diff / self.iteration), end='')
+        if self.sum_max_diff > 0:
+            print(", max_diff={:.3}".format(self.sum_max_diff / self.iteration), end='')
         print()
 
         self.iteration = 0
         self.sum_loss = 0
         self.sum_acc = 0
-        self.sum_mean_dist = 0
-        self.sum_nonzero = 0
+        self.sum_mean_diff = 0
+        self.sum_max_diff = 0
 
-    def write_iteration(self, label, loss, acc, mean_dist, nonzero):
+    def write_iteration(self, label, loss, acc, mean_diff, max_diff):
         with open(self.log_file, 'a+') as f:
             if self.current_section != label:
                 f.write("{} [{}]".format(label, self.optimizer.epoch))
                 f.write('\n')
                 self.current_section = label
-            f.write("{},{},{},{}\n".format(self.iteration, loss, acc, mean_dist, nonzero))
+            f.write("{},{},{},{}\n".format(self.iteration, loss, acc, mean_diff, max_diff))
 
     def mark_lr(self):
         with open(self.log_file, 'a+') as f:

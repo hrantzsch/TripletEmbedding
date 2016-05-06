@@ -27,7 +27,13 @@ class TripletNet(chainer.Chain):
         """
         return (dist_pos.data < dist_neg.data).sum() / len(dist_pos.data)
 
-    def _max_distance(self, dist_pos, dist_neg):
+    def _mean_difference(self, dist_pos, dist_neg):
+        """
+        Calculate the mean difference between anc-pos and anc-neg distances.
+        """
+        return (dist_neg.data - dist_pos.data).mean()
+
+    def _max_difference(self, dist_pos, dist_neg):
         """
         Calculate difference between the shortest anc-neg distance and the
         largest anc-pos distance; i.e. the worst embedding in this batch.
@@ -76,11 +82,12 @@ class TripletNet(chainer.Chain):
         sm = F.softmax(dist)
         self.loss = mse_zero_one(sm)
         self.accuracy = self._accuracy(dist_pos, dist_neg)
-        self.dist = self._max_distance(dist_pos, dist_neg)
+        self.mean_diff = self._mean_difference(dist_pos, dist_neg)
+        self.max_diff = self._max_difference(dist_pos, dist_neg)
 
         return self.loss
 
-    def __call__(self, x, margin_factor=1.0, debug=False):
+    def __call__(self, x, margin_factor=1.0, train=True):
         """
         Embed samples using the CNN, then calculate distances and triplet loss.
 
@@ -98,4 +105,5 @@ class TripletNet(chainer.Chain):
         """
         anc, pos, neg = (self.embed(h) for h in F.split_axis(x, 3, 0))
         dist_pos, dist_neg = self.squared_distance(anc, pos, neg)
-        return self.compute_loss(dist_pos, dist_neg, margin_factor)
+        mf = margin_factor if train else 1.0  # no margin when testing
+        return self.compute_loss(dist_pos, dist_neg, mf)
