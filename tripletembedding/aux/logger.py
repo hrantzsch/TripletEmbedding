@@ -85,7 +85,7 @@ class Logger:
                 f.write("{} [{}]".format(label, self.optimizer.epoch))
                 f.write('\n')
                 self.current_section = label
-            f.write("{},{},{},{}\n"
+            f.write("{},{},{},{},{}\n"
                     .format(self.iteration, loss, acc, mean_diff, max_diff))
 
     def mark_lr(self):
