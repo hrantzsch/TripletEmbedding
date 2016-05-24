@@ -18,6 +18,10 @@ class TripletNet(chainer.Chain):
             cnn=cnn(),
         )
 
+    def clean(self):
+        self.cnn.zerograds()
+        self.zerograds()
+
     def _accuracy(self, dist_pos, dist_neg):
         """
         Calculate share of samples where anc-pos distance is smaller than
