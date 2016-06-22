@@ -60,17 +60,18 @@ class Logger:
 
     def log_mean(self, label):
 
-        print("{} mean\tloss={:.4f}"
-              .format(label, self.sum_loss / self.iteration), end='')
-        if self.sum_acc > 0:
-            print(", acc={:.3%}"
-                  .format(self.sum_acc / self.iteration), end='')
-        if self.sum_mean_diff != 0:
-            print(", mean_diff={:.3}"
-                  .format(self.sum_mean_diff / self.iteration), end='')
-        if self.sum_max_diff > 0:
-            print(", max_diff={:.3}"
-                  .format(self.sum_max_diff / self.iteration), end='')
+        if self.iteration > 0:
+            print("{} mean\tloss={:.4f}"
+                  .format(label, self.sum_loss / self.iteration), end='')
+            if self.sum_acc > 0:
+                print(", acc={:.3%}"
+                      .format(self.sum_acc / self.iteration), end='')
+            if self.sum_mean_diff != 0:
+                print(", mean_diff={:.3}"
+                      .format(self.sum_mean_diff / self.iteration), end='')
+            if self.sum_max_diff > 0:
+                print(", max_diff={:.3}"
+                      .format(self.sum_max_diff / self.iteration), end='')
         print()
 
         self.iteration = 0
